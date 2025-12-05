@@ -55,7 +55,7 @@ except Exception as e:
 
 # --- [3] 함수 모음 ---
 def get_ai_response(image):
-    model = genai.GenerativeModel('gemini-1.5-flash') 
+    model = genai.GenerativeModel('gemini-2.5-flash') 
     prompt = """
     당신은 수학 선생님입니다. 이 이미지는 학생이 틀린 문제입니다.
     다음 형식으로 답변을 주세요:
@@ -149,4 +149,5 @@ if user_name and user_pw:
         else:
             st.error("관리자 비밀번호가 틀렸습니다.")
 else:
+
     st.info("👈 왼쪽에서 이름과 비밀번호를 입력하고 로그인하세요.")

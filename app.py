@@ -15,7 +15,6 @@ SHEET_NAME = "수학오답노트_DB"
 ADMIN_PASSWORD = "1234"
 
 # --- [2] Cloudinary 설정 (Secrets에서 가져오기) ---
-# 나중에 Streamlit Secrets에 이 3개 값을 넣어줄 겁니다.
 if "cloudinary" in st.secrets:
     cloudinary.config(
         cloud_name = st.secrets["cloudinary"]["cloud_name"],
@@ -25,17 +24,18 @@ if "cloudinary" in st.secrets:
 
 # --- [3] 연결 설정 (Gemini & 구글시트) ---
 try:
-    # Gemini
+    # 1. Gemini 연결
     if "GOOGLE_API_KEY" in st.secrets:
         genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
     else:
         genai.configure(api_key=GOOGLE_API_KEY)
     
-    # 구글 시트
+    # 2. 구글 시트 연결
     scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
     if os.path.exists("secrets.json"):
         creds = ServiceAccountCredentials.from_json_keyfile_name("secrets.json", scope)
     else:
+        # Streamlit Cloud 배포용
         key_dict = dict(st.secrets["gcp_service_account"])
         creds = ServiceAccountCredentials.from_json_keyfile_dict(key_dict, scope)
     
@@ -58,7 +58,8 @@ def upload_image(image_file):
         return "이미지 업로드 실패"
 
 def get_ai_response(image):
-    # 2.5 flash가 되신다면 2.5로, 아니면 1.5로 설정
+    # 선생님이 2.5 버전을 쓰신다면 아래 이름을 그대로 두세요.
+    # 만약 에러가 나면 'gemini-1.5-flash'로 바꾸시면 됩니다.
     model = genai.GenerativeModel('gemini-2.5-flash') 
     prompt = """
     당신은 수학 선생님입니다. 이 이미지는 학생이 틀린 문제입니다.
@@ -99,9 +100,8 @@ if user_name and user_pw:
     
     if menu == "📸 문제 찍기":
         st.subheader(f"반가워요, {user_name} 학생!")
-        unit = st.selectbox("단원 선택", ["수학(상)", "수학(하)", "수1", "수2", "미적분", "확통"])
+        unit = st.selectbox("단원 선택", [ "초5",  "초6",  "중1", "중2",  "중3", "공통수학1", "공통수학2", "대수", "미적분1", "확통",  "수1", "수2", "미적분",])
         
-        # 파일 업로더와 카메라 동시에 지원 (선택 가능)
         img_file = st.camera_input("문제를 찍어주세요")
         
         if img_file:
@@ -114,7 +114,6 @@ if user_name and user_pw:
                 st.info("분석 완료! 클라우드에 저장 중...")
                 
                 # 2. 이미지 업로드 (여기가 핵심!)
-                # camera_input은 한 번 읽으면 사라지므로 다시 처음으로 되감기
                 img_file.seek(0) 
                 img_url = upload_image(img_file)
                 
@@ -152,7 +151,6 @@ if user_name and user_pw:
         else:
             st.warning("데이터가 없습니다.")
             
-    # 선생님 메뉴는 기존과 동일... (생략하거나 그대로 두셔도 됩니다)
     elif menu == "👨‍🏫 선생님 전용":
         if user_pw == ADMIN_PASSWORD:
             data = sheet.get_all_records()

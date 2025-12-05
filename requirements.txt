@@ -3,4 +3,6 @@ google-generativeai
 gspread
 oauth2client
 pandas
+
 Pillow
+cloudinary

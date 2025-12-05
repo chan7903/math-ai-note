@@ -18,15 +18,25 @@ ADMIN_PASSWORD = "1234"
 
 # --- [2] Gemini 및 구글 시트 연결 ---
 try:
-    genai.configure(api_key=GOOGLE_API_KEY)
+    # 1. Gemini API 키 설정 (Secrets에서 가져오기)
+    if "GOOGLE_API_KEY" in st.secrets:
+        genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
+    else:
+        # 혹시 로컬에서 돌릴 때를 대비한 비상용
+        genai.configure(api_key=GOOGLE_API_KEY)
     
-    # 구글 시트 연결
+    # 2. 구글 시트 연결 (파일 대신 Secrets 내용 사용!)
     scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-    creds = ServiceAccountCredentials.from_json_keyfile_name("secrets.json", scope)
+    
+    # [핵심 변경] 파일 이름("secrets.json")을 찾는 게 아니라, 입력해둔 비밀번호(Secrets)를 가져옵니다.
+    key_dict = dict(st.secrets["gcp_service_account"])
+    creds = ServiceAccountCredentials.from_json_keyfile_dict(key_dict, scope)
+    
     client = gspread.authorize(creds)
     sheet = client.open(SHEET_NAME).sheet1
+    
 except Exception as e:
-    st.error(f"연결 오류! 설정 파일(secrets.json)이나 API 키를 확인하세요.\n오류 내용: {e}")
+    st.error(f"오류가 발생했습니다! 내용을 확인해주세요.\n{e}")
     st.stop()
 
 # --- [3] 함수 모음 ---
